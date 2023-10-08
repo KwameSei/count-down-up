@@ -4,7 +4,6 @@ const TimerForm = ({
   userHours, setUserHours,
   userMinutes, setUserMinutes,
   userSeconds, setUserSeconds,
-  userMilliseconds, setUserMilliseconds,
   // userMonth, setUserMonth,
   // userDay, setUserDay,
   // userYear, setUserYear,
@@ -39,15 +38,6 @@ const TimerForm = ({
             id='seconds'
             value={userSeconds}
             onChange={(e) => setUserSeconds(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor='milliseconds'>Milliseconds</label>
-          <input
-            type='number'
-            id='milliseconds'
-            value={userMilliseconds}
-            onChange={(e) => setUserMilliseconds(e.target.value)}
           />
         </div>
         <button type='submit'>Submit CountDown</button>

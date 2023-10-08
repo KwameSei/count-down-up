@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import TimerForm from './TimerForm';
+import TimerForm from '../TimerForm';
 
 const Frame = () => {
-  const [timeLeft, setTimeLeft] = useState({});  // { hours: 0, minutes: 0, seconds: 0 }
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
   const [timeUp, setTimeUp] = useState(false);
   const [timeUpMessage, setTimeUpMessage] = useState('');
   const [countDown, setCountDown] = useState(false);
@@ -36,7 +36,6 @@ const Frame = () => {
   const [userHours, setUserHours] = useState(0);
   const [userMinutes, setUserMinutes] = useState(0);
   const [userSeconds, setUserSeconds] = useState(0);
-  const [userMilliseconds, setUserMilliseconds] = useState(0);
   const [userMonth, setUserMonth] = useState(0);
   const [userDay, setUserDay] = useState(0);
   const [userYear, setUserYear] = useState(0);
@@ -45,67 +44,56 @@ const Frame = () => {
 
   useEffect(() => {
     if (eventDate) {
-      
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      // const distance = now.getTime() - time
-      const distance = eventDate - now;
+      const interval = setInterval(() => {
+        const now = new Date().getTime();
+        const distance = eventDate - now;
 
-      // const days = Math.floor(distance / (1000 * 60 * 60 * 24))
-      const hours = Math.floor(distance % (1000 * 60 * 60 * 24) / (1000 * 60 * 60))
-      const minutes = Math.floor(distance % (1000 * 60 * 60) / (1000 * 60))
-      const seconds = Math.floor(distance % (1000 * 60) / 1000)
-      const milliseconds = Math.floor(distance % (1000))
-      setTimeLeft({ hours, minutes, seconds })
-      if (distance < 0) {
-        if (!countUp) {
-          setCountUp(true)
-          setCountDown(false)
+        if (distance <= 0) {
+          if (!countUp) {
+            setCountUp(true);
+            setCountDown(false);
+            clearInterval(interval);
+            setTimeUp(true);
+            setTimeUpMessage('Time is up!');
+          } else {
+            // Calculate the elapsed time since the event date
+            const elapsedSeconds = Math.floor((now - eventDate) / 1000);
+            const seconds = elapsedSeconds % 60;
+            const minutes = Math.floor(elapsedSeconds / 60) % 60;
+            const hours = Math.floor(elapsedSeconds / 3600);
 
-          clearInterval(interval)
-          setTimeUp(true)
-          setTimeUpMessage('Time is up!')
-
-          return;
-
+            setTimeLeft({ hours, minutes, seconds });
+          }
         } else {
-          hour = minutes = seconds = milliseconds = 0;
+          const hours = Math.floor(distance / (1000 * 60 * 60));
+          const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+          setTimeLeft({ hours, minutes, seconds });
         }
-      }
+      }, 1000);
 
-      // Update Timer
-      setTimeLeft({ hours, minutes, seconds, milliseconds });
-    }, 1000)
-
-    return () => clearInterval(interval)
+      return () => clearInterval(interval);
     }
-  }, [eventDate, countUp])
+  }, [eventDate, countUp]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     // Convert user input to numbers
-    const hoursToAdd = parseInt(userHours, 10);
-    const secondsToAdd = parseInt(userSeconds, 10);
-    const minutesToAdd = parseInt(userMinutes, 10);
-    const millisecondsToAdd = parseInt(userMilliseconds, 10);
+    const hours = parseInt(userHours, 10);
+    const minutes = parseInt(userMinutes, 10);
+    const seconds = parseInt(userSeconds, 10);
 
-    // Calculate the target date and time
-    const now = new Date();
-    const targetDate = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      now.getHours() + hoursToAdd,
-      now.getMinutes() + minutesToAdd,
-      now.getSeconds() + secondsToAdd,
-      now.getMilliseconds() + millisecondsToAdd
-    );
+    // Calculate target date and time
+    const now = new Date().getTime();
+    const targetDate = now + (hours * 3600 * 1000) + (minutes * 60 * 1000) + (seconds * 1000);
 
     setEventDate(targetDate);
     setCountDown(true);
     setCountUp(false);
-  }
+    setTimeLeft({ hours, minutes, seconds });
+  };
 
   return (
     <div>
@@ -127,10 +115,6 @@ const Frame = () => {
               <h3>{timeLeft.seconds}</h3>
               <p>Seconds</p>
             </div>
-            <div className="count-down__body__timer__milliseconds">
-              <h3>{timeLeft.milliseconds}</h3>
-              <p>Milliseconds</p>
-            </div>
           </div>
         </div>
         <div className="count-down__footer">
@@ -141,8 +125,6 @@ const Frame = () => {
             setUserMinutes={setUserMinutes}
             userSeconds={userSeconds}
             setUserSeconds={setUserSeconds}
-            userMilliseconds={userMilliseconds}
-            setUserMilliseconds={setUserMilliseconds}
             userMonth={userMonth}
             setUserMonth={setUserMonth}
             userDay={userDay}
