@@ -18,13 +18,17 @@ const Frame = () => {
     { hours: 0, minutes: 0, seconds: 0, activity: '' },
     { hours: 0, minutes: 0, seconds: 0, activity: '' },
   ]); // State for form fields
+  // Disable inactive form fields
+  const [activeFieldIndex, setActiveFieldIndex] = useState(-1); // State for active form field
+
   let interval;
 
   // Function to start a new countdown timer
-  const startCountdownTimer = (hours, minutes, seconds) => {
+  const startCountdownTimer = (hours, minutes, seconds, index) => {
     const newTimer = { hours, minutes, seconds };
     setCountdownTimers([...countdownTimers, newTimer]);
     setIsCountingDown(true);
+    setActiveFieldIndex(index)  // Set active form field index
   };
 
   // Function to stop the timer even before the time is up
@@ -38,6 +42,8 @@ const Frame = () => {
   
     // Optionally, reset the timer values to their initial state
     setCountdownTimers([]);
+
+    setActiveFieldIndex(-1) // Reset active form field index
   };
 
   // Function to update a countdown timer
@@ -179,16 +185,16 @@ const Frame = () => {
         <div className="form-fields">
            {formFields.map((field, index) => (
              <div key={index} className="form-field">
-                <input
-                  type="text"
-                  value={field.activity}
-                  placeholder='activity'
-                  onChange={(e) => {
-                    const updatedFields = [...formFields];
-                    updatedFields[index].activity = e.target.value;
-                    setFormFields(updatedFields);
-                  }}
-                />
+               <input
+                 type="text"
+                 value={field.activity}
+                 placeholder='activity'
+                 onChange={(e) => {
+                   const updatedFields = [...formFields];
+                   updatedFields[index].activity = e.target.value;
+                   setFormFields(updatedFields);
+                 }}
+               />
                <input
                  type="number"
                  value={field.hours.toString()} // Cast to string
@@ -216,11 +222,17 @@ const Frame = () => {
                    setFormFields(updatedFields);
                  }}
                />
-               <button onClick={() => startCountdownTimer(field.hours, field.minutes, field.seconds)}>
+               <button
+                 onClick={() => startCountdownTimer(field.hours, field.minutes, field.seconds, index)}
+                 disabled={activeFieldIndex !== -1 && activeFieldIndex !== index}
+               >
                  Start Timer
                </button>
-                <button onClick={() => stopTimer()}>Stop Timer</button>
-               <button onClick={() => updateCountdownTimer(index, field.hours, field.minutes, field.seconds)}>
+               <button onClick={() => stopTimer()}>Stop Timer</button>
+               <button
+                 onClick={() => updateCountdownTimer(index, field.hours, field.minutes, field.seconds)}
+                 disabled={activeFieldIndex !== -1 && activeFieldIndex !== index}
+               >
                  Update Timer
                </button>
                <button onClick={() => removeFormField(index)}>Remove Field</button>
