@@ -1,49 +1,52 @@
-import React from 'react'
+import React from 'react';
 
-const TimerForm = ({
-  userHours, setUserHours,
-  userMinutes, setUserMinutes,
-  userSeconds, setUserSeconds,
-  // userMonth, setUserMonth,
-  // userDay, setUserDay,
-  // userYear, setUserYear,
-  handleSubmit
-}) => {
-  
+const TimerForm = ({ formData, index, handleInputChange }) => {
+  const { hours, minutes, seconds } = formData;
+
+  const handleHoursChange = (e) => {
+    handleInputChange('hours', parseInt(e.target.value, 10));
+  };
+
+  const handleMinutesChange = (e) => {
+    handleInputChange('minutes', parseInt(e.target.value, 10));
+  };
+
+  const handleSecondsChange = (e) => {
+    handleInputChange('seconds', parseInt(e.target.value, 10));
+  };
+
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor='hours'>Hours</label>
-          <input
-            type='number'
-            id='hours'
-            value={userHours}
-            onChange={(e) => setUserHours(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor='minutes'>Minutes</label>
-          <input
-            type='number'
-            id='minutes'
-            value={userMinutes}
-            onChange={(e) => setUserMinutes(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor='seconds'>Seconds</label>
-          <input
-            type='number'
-            id='seconds'
-            value={userSeconds}
-            onChange={(e) => setUserSeconds(e.target.value)}
-          />
-        </div>
-        <button type='submit'>Submit CountDown</button>
-      </form>
+    <div className="timer-form">
+      <h3>Timer {index + 1}</h3>
+      <div className="form-group">
+        <label htmlFor="hours">Hours</label>
+        <input
+          type="number"
+          id="hours"
+          value={hours}
+          onChange={handleHoursChange}
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="minutes">Minutes</label>
+        <input
+          type="number"
+          id="minutes"
+          value={minutes}
+          onChange={handleMinutesChange}
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="seconds">Seconds</label>
+        <input
+          type="number"
+          id="seconds"
+          value={seconds}
+          onChange={handleSecondsChange}
+        />
+      </div>
     </div>
   );
-}
+};
 
 export default TimerForm;
