@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { Button } from '@mui/material';
+import { Add } from '@mui/icons-material';
 import TimerForm from '../TimerForm';
 import './Frame.scss';
 
@@ -6,6 +8,7 @@ const Frame = () => {
   const [countdownTimers, setCountdownTimers] = useState([]);
   const [isCountingDown, setIsCountingDown] = useState(true);
   const [isCountingUp, setIsCountingUp] = useState(false);
+  const [currentTimerIndex, setCurrentTimerIndex] = useState(-1);
   const [activity, setActivity] = useState('');
   const [formFields, setFormFields] = useState([  // Setting default number of form fields
     { hours: 0, minutes: 0, seconds: 0, activity: '' },
@@ -21,29 +24,66 @@ const Frame = () => {
   // Disable inactive form fields
   const [activeFieldIndex, setActiveFieldIndex] = useState(-1); // State for active form field
 
-  let interval;
+  let countdownInterval;
+  let countupInterval;
 
   // Function to start a new countdown timer
   const startCountdownTimer = (hours, minutes, seconds, index) => {
-    const newTimer = { hours, minutes, seconds };
-    setCountdownTimers([...countdownTimers, newTimer]);
+    // Clear existing timers
+    clearInterval(countdownInterval);
+    clearInterval(countupInterval);
+
+    const newTimer = { hours, minutes, seconds, index };
+    setCountdownTimers([newTimer]);
     setIsCountingDown(true);
-    setActiveFieldIndex(index)  // Set active form field index
+    setIsCountingUp(false);
+    setCurrentTimerIndex(index);
+
+    countdownInterval = setInterval(() => {
+      setCountdownTimers((prevTimers) => {
+        return prevTimers.map((timer) => {
+          const { hours, minutes, seconds, index } = timer;
+          if (hours === 0 && minutes === 0 && seconds === 0) {
+            clearInterval(countdownInterval);
+            setIsCountingDown(false);
+            setIsCountingUp(true);
+          } else if (hours === 0 && minutes === 0 && seconds === 1) {
+            // Handle the timer reaching 0 but showing "00:00:01" before switching to countup
+            return { hours: 0, minutes: 0, seconds: 0, index };
+          } else {
+            let newSeconds = seconds - 1;
+            let newMinutes = minutes;
+            let newHours = hours;
+            if (newSeconds < 0) {
+              newSeconds = 59;
+              newMinutes -= 1;
+            }
+            if (newMinutes < 0) {
+              newMinutes = 59;
+              newHours -= 1;
+            }
+            return { hours: newHours, minutes: newMinutes, seconds: newSeconds, index };
+          }
+        });
+      });
+    }, 1000);
   };
 
   // Function to stop the timer even before the time is up
   const stopTimer = () => {
-    // Clear any existing timers
-    clearInterval(interval);
-  
-    // Update state to indicate the timer is stopped
+    // Clear any existing intervals
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+    if (countupInterval) {
+      clearInterval(countupInterval);
+    }
+
     setIsCountingDown(false);
     setIsCountingUp(false);
-  
-    // Optionally, reset the timer values to their initial state
-    setCountdownTimers([]);
+    setActiveFieldIndex(-1);
 
-    setActiveFieldIndex(-1) // Reset active form field index
+    setCountdownTimers([]);
   };
 
   // Function to update a countdown timer
@@ -64,6 +104,24 @@ const Frame = () => {
     }
   };
 
+  // Function to pause a countdown timer
+  const pauseCountdownTimer = () => {
+    // Clear any existing timers
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+
+    if (countupInterval) {
+      clearInterval(countupInterval);
+    }
+
+    // Update state to indicate the timer is paused
+    setIsCountingDown(false);
+    setIsCountingUp(false);
+
+    setActiveFieldIndex(-1) // Reset active form field index
+  };
+
   // Function to add a new form field
   const addFormField = () => {
     const newFormField = { hours: 0, minutes: 0, seconds: 0, activity: '' };
@@ -81,16 +139,16 @@ const Frame = () => {
 
   useEffect(() => {
     // Countdown timer logic
-    let interval;
+    // let interval;
   
     if (isCountingDown) {
-      interval = setInterval(() => {
+      countdownInterval = setInterval(() => {
         // Iterate through each timer and update the countdown
         const updatedTimers = countdownTimers.map((timer) => {
           let { hours, minutes, seconds } = timer;
   
           if (hours === 0 && minutes === 0 && seconds === 0) {
-            clearInterval(interval);
+            clearInterval(countdownInterval);
             setIsCountingDown(false);
             setIsCountingUp(true); // Start counting up
             return timer;
@@ -114,15 +172,15 @@ const Frame = () => {
       }, 1000);
     }
   
-    return () => clearInterval(interval);
+    return () => clearInterval(countdownInterval);
   }, [isCountingDown, countdownTimers]);
   
   useEffect(() => {
     // Count up timer logic
-    let interval;
+    // let interval;
   
     if (isCountingUp) {
-      interval = setInterval(() => {
+      countupInterval = setInterval(() => {
         // Iterate through each timer and update the count up
         const updatedTimers = countdownTimers.map((timer) => {
           let { hours, minutes, seconds } = timer;
@@ -146,47 +204,52 @@ const Frame = () => {
       }, 1000);
     }
   
-    return () => clearInterval(interval);
+    return () => clearInterval(countupInterval);
   }, [isCountingUp, countdownTimers]);  
 
   return (
     <div className="count-down">
+      <div className="body">
       <div className="header">
         <h2>Count Down Up</h2>
       </div>
-      <div className="body">
         <div className="timer-frame">
           {countdownTimers.map((timer, index) => (
-            <div key={index} className="timer">
+            <div key={index} className="timer-container">
               {/* CountdownTimer */}
-              <div className="countdown-timer">
-                <div className="timer">
-                  <div className="time-unit">
-                    <span className="time">{timer.hours < 10 ? `0${timer.hours}` : timer.hours}</span>
-                    <span className="unit">Hours</span>
-                  </div>
-                  <div className="time-unit">
-                    <span className="time">{timer.minutes < 10 ? `0${timer.minutes}` : timer.minutes}</span>
-                    <span className="unit">Minutes</span>
-                  </div>
-                  <div className="time-unit">
-                    <span className="time">{timer.seconds < 10 ? `0${timer.seconds}` : timer.seconds}</span>
-                    <span className="unit">Seconds</span>
-                  </div>
-                </div>
-              </div>
-              <button onClick={() => removeCountdownTimer(index)}>Remove</button>
+               <div className="time-unit">
+                 <span className="time">{timer.hours < 10 ? `0${timer.hours}` : timer.hours}</span>
+                 <span className="unit">Hours</span>
+               </div>
+               <div className="time-unit">
+                 <span className="time">{timer.minutes < 10 ? `0${timer.minutes}` : timer.minutes}</span>
+                 <span className="unit">Minutes</span>
+               </div>
+               <div className="time-unit">
+                 <span className="time">{timer.seconds < 10 ? `0${timer.seconds}` : timer.seconds}</span>
+                 <span className="unit">Seconds</span>
+               </div>
             </div>
           ))}
+          {/* <button onClick={() => removeCountdownTimer(index)}>Remove</button> */}
         </div>
         <div className="add-remove-buttons">
-          <button onClick={addFormField}>Add Form Field</button>
+          <Button onClick={addFormField}
+            className='add-field-button'
+          ><Add />Add Field</Button>
+        </div>
+        <div className="input-lables">
+          <div className='activity-lable'>Activities</div>
+          <div className='hours-lable'>Hrs</div>
+          <div className='minutes-lable'>Mins</div>
+          <div className='seconds-lable'>Sds</div>
         </div>
         <div className="form-fields">
            {formFields.map((field, index) => (
              <div key={index} className="form-field">
                <input
                  type="text"
+                 className="activity-value"
                  value={field.activity}
                  placeholder='activity'
                  onChange={(e) => {
@@ -197,15 +260,18 @@ const Frame = () => {
                />
                <input
                  type="number"
+                 className="input-value"
                  value={field.hours.toString()} // Cast to string
                  onChange={(e) => {
-                   const updatedFields = [...formFields];
-                   updatedFields[index].hours = parseInt(e.target.value, 10);
-                   setFormFields(updatedFields);
+                  const updatedFields = [...formFields]; // Create a copy of formFields
+                  updatedFields[index] = { ...updatedFields[index] }; // Create a copy of the field being updated
+                  updatedFields[index].hours = parseInt(e.target.value, 10);
+                  setFormFields(updatedFields); // Set the updated copy as the new state
                  }}
                />
                <input
                  type="number"
+                 className="input-value"
                  value={field.minutes.toString()} // Cast to string
                  onChange={(e) => {
                    const updatedFields = [...formFields];
@@ -215,6 +281,7 @@ const Frame = () => {
                />
                <input
                  type="number"
+                 className="input-value"
                  value={field.seconds.toString()} // Cast to string
                  onChange={(e) => {
                    const updatedFields = [...formFields];
@@ -222,20 +289,34 @@ const Frame = () => {
                    setFormFields(updatedFields);
                  }}
                />
-               <button
+               <Button
                  onClick={() => startCountdownTimer(field.hours, field.minutes, field.seconds, index)}
                  disabled={activeFieldIndex !== -1 && activeFieldIndex !== index}
+                 className="start-button"
                >
-                 Start Timer
-               </button>
-               <button onClick={() => stopTimer()}>Stop Timer</button>
-               <button
+                 Start
+               </Button>
+
+               {/* <Button onClick={() => pauseCountdownTimer()}
+                  disabled={activeFieldIndex !== -1 && activeFieldIndex !== index}
+                  className='pause-button'
+               >
+                Pause
+               </Button> */}
+
+               <Button onClick={() => stopTimer()}
+                className='stop-button'
+               >Stop</Button>
+               {/* <Button
                  onClick={() => updateCountdownTimer(index, field.hours, field.minutes, field.seconds)}
                  disabled={activeFieldIndex !== -1 && activeFieldIndex !== index}
                >
                  Update Timer
-               </button>
-               <button onClick={() => removeFormField(index)}>Remove Field</button>
+               </Button> */}
+
+               <Button onClick={() => removeFormField(index)}
+                className='remove-button'
+               >Remove</Button>
              </div>
            ))}
          </div>
